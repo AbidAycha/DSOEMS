@@ -82,7 +82,7 @@ Switching to the "MPC" orchestrator setting, the system leverages Model Predicti
 - **Specific Outcome**: In the same scenario, MPC allows the second EV to begin charging immediately by orchestrating the exact amount of power required between specific specifications of EVs, even when energy resources are limited.
 - **Result**: This leads to more efficient energy usage, reduced wait times, and enhanced overall performance, demonstrating the effectiveness of using advanced control strategies in complex systems.
 
-![MPC Orchestrator Example](Using MPC.png)  
+![Using MPC.png]
 
 ### Conclusion
 
