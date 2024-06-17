@@ -1,0 +1,5 @@
+numpy==1.21.4
+matplotlib==3.4.3
+cvxpy==1.1.15
+Pillow==8.4.0  # For handling image operations with PIL
+tkinter  # Typically included with Python's standard library, no need to list it unless you have a specific version from a third-party source
