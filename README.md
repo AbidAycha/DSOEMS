@@ -72,7 +72,7 @@ Under the "None" orchestrator setting, the system does not employ any advanced a
 - **Observation**: When using the "None" setting, the second electric vehicle (EV), which requires a high power level (Level 3 charging), experiences significant delays. Despite the availability of power and an unoccupied charging spot, the system fails to start charging this EV immediately.
 - **Reason**: The system under the "None" setting lacks the capability to dynamically allocate available power. As a result, the EV must wait until other ongoing processes are completed, or until the system manually reallocates resources to accommodate high-power demands.
 
-![None Orchestrator Example](Without Using MPC.png)
+![None Orchestrator Example](Without-Using-MPC.png)
 
 ### MPC Orchestrator Setting
 
@@ -82,7 +82,8 @@ Switching to the "MPC" orchestrator setting, the system leverages Model Predicti
 - **Specific Outcome**: In the same scenario, MPC allows the second EV to begin charging immediately by orchestrating the exact amount of power required between specific specifications of EVs, even when energy resources are limited.
 - **Result**: This leads to more efficient energy usage, reduced wait times, and enhanced overall performance, demonstrating the effectiveness of using advanced control strategies in complex systems.
 
-![Using MPC.png]
+![MPC Orchestrator Example](Using-MPC.png)  
+
 
 ### Conclusion
 
