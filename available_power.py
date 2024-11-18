@@ -16,6 +16,7 @@ class AvailablePower:
 
         try:
             for start, end in self.peak_hours:
+        
                 if start <= hour < end:
                     return self.peak_power
             return self.off_peak_power

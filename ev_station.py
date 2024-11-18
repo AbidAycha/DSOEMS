@@ -44,7 +44,7 @@ class EV:
         self.battery_state = battery_state  
         self.min_rate = min_rate 
         self.max_rate = max_rate 
-        self.charging_rate = max(min(CHARGING_LEVELS[desired_level], max_rate), min_rate)
+        self.charging_rate = min(CHARGING_LEVELS[desired_level], max_rate)
         self.capacity = capacity
         self.status = 'waiting'  # different status: waiting, paused, charging, finished
         self.start_time = None
@@ -54,6 +54,7 @@ class EV:
     def update_charging_rate(self,rate):
         self.charging_rate = min(rate, self.max_rate)
     def update_battery_state(self):
+        
         self.battery_state += (self.charging_rate / self.capacity) * 100 / 4 
         
         
@@ -82,15 +83,24 @@ class ChargingSpot(Device):
   
     # Updates the state of the charging spot based on the allocated energy.
     def update_state(self, allocated_energy):
-        self.current_ev.charging_rate=allocated_energy
+        self.current_ev.update_charging_rate(allocated_energy)
+       
+        #self.current_ev.charging_rate=allocated_energy
         self.current_energy_usage=allocated_energy
     # Calculates the remaining charge time for an EV based on its current state.    
-    def remaining_charge_time(self, ev=None):
+    def remaining_charge_time_old(self, ev=None):
         if not ev:
             return 0
         return (max(int(4 * ev.capacity * (100 - ev.battery_state) / (100*ev.charging_rate)), 0))
     
-    
+    def remaining_charge_time(self, ev=None):
+        if not ev:
+            return 0
+        #print(ev.id, ',',ev.capacity,',', ev.battery_state,',', ev.charging_rate)
+        if ev.charging_rate:
+            return (max(int(4 * ev.capacity * (100 - ev.battery_state) / (100*ev.charging_rate)), 0))
+        return (max(int(4 * ev.capacity * (100 - ev.battery_state) / (100*ev.min_rate)), 0))
+      
     
 class ChargingStation():
     """
@@ -113,7 +123,7 @@ class ChargingStation():
             for _ in range(spots_count):
                 spot = ChargingSpot(level, priority, level_rate, min_energy, max_energy)
                 self.spots.append(spot)
-       
+        #print("ev station", self.spots)
         self.queue = []
         self.charging_evs = []
         self.finished_evs = []
@@ -128,6 +138,7 @@ class ChargingStation():
     def check_spot(self,ev):
         for spot in self.spots:
             if (spot.occupied and spot.current_ev==ev) :
+                #print("hey", spot.occupied)
                 return spot
         return False
 
@@ -155,31 +166,44 @@ class ChargingStation():
                         ev.paused_periods[-1][1] = time_interval
                         ev.status = 'charging'
                         total_power_needed += additional_power_needed
+                        #self.power_consumption[time_interval] += additional_power_needed
                     else:
                         
                         break  
         for ev in self.charging_evs:
             if ev.status == 'paused':
                 ev.end_time+=1
+                # print ("end paused", ev.end_time)
            
     def process_evs(self, power, time_interval):
 
-        for ev in self.charging_evs.copy():
-            if ev.status == 'charging':
-                ev.update_battery_state()
+        for ev in self.charging_evs:
+            
+
             if time_interval >= ev.end_time or ev.battery_state==100 :
                 ev.status = 'finished'
                 self.finished_evs.append(ev)
                 self.charging_evs.remove(ev)
                 self.free_spot(ev)
-
+            if ev.status == 'charging':
+                
+                current_spot=self.check_spot(ev)
+                ev.end_time = time_interval + current_spot.remaining_charge_time(ev)
+                #print("time_interval charging", time_interval)
+                #print ("end charging", ev.end_time)
+                ev.update_battery_state()
+                #print("hey", time_interval, ev.battery_state, ev.charging_rate, ev.end_time)
+                #ev.end_time = time_interval + self.check_spot(ev).remaining_charge_time(ev)
         for ev in self.queue.copy():
             if self.check_power_availability(ev, power):
                 if self.start_charging(ev, time_interval):
                     self.queue.remove(ev)
             elif not self.check_spot(ev):
+                
                 for spot in self.spots:
-                    if not spot.occupied and spot.level == ev.desired_level:        
+                    
+                    if not spot.occupied and spot.level == ev.desired_level:   
+                             
                         spot.occupied = True
                         spot.current_ev = ev
                         break
@@ -191,17 +215,21 @@ class ChargingStation():
     def start_charging(self, ev, time_interval):
         current_spot=self.check_spot(ev)
         if not current_spot:
+            
             for spot in self.spots:
                 if not spot.occupied and spot.level == ev.desired_level:
                     current_spot= spot
                     spot.current_ev = ev
+                    
                     spot.occupied = True
                     break
             if not current_spot: 
                 return False
-        
+        #print("here", current_spot, current_spot.occupied)
         ev.start_time = time_interval
-        ev.end_time = time_interval + current_spot.remaining_charge_time(ev)
+        # print("time_interval start", time_interval)
+        ev.end_time = ev.start_time + current_spot.remaining_charge_time(ev)
+        #print ("end start", ev.end_time, "remaining", current_spot.remaining_charge_time(ev))
         ev.status = 'charging'
         self.charging_evs.append(ev)            
         return True

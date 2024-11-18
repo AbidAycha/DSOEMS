@@ -1,18 +1,18 @@
 """
     This module handles the user interface for the Energy Orchestration Simulation system. 
-    It allows users to input settings and parameters for power distribution, manage HVAC and EV charging station 
+    It allows users to input settings and parameters for power distribution, manage HVAC, lighting and EV charging station 
     devices, and simulate the energy orchestration based on the provided configurations. 
     The interface is structured to capture input for:
     - peak and off-peak power settings
     - device priorities
     - simulation durations
-    - orchestrator
+    - orchestrators
 
     and view results.
 
     Components:
     - Peak Power Settings: Input fields for defining peak power, off-peak power, and peak hours.
-    - Device Management: Controls to configure HVAC settings and electric vehicle charging station parameters.
+    - Device Management: Controls to configure HVAC and lighting settings and electric vehicle charging station parameters.
     - Simulation Controls: Options to set the simulation duration and initiate the simulation process.
     - Dynamic Data Entry: Interface allows for the dynamic addition of electric vehicles with specific charging needs.
     - Results Display: Area to view the simulation output and adjust parameters for re-simulation if necessary.
@@ -21,9 +21,11 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-
+import json
+from tkinter import filedialog
 from ev_station import EV, ChargingStation
 from hvac import Model
+from lighting import Lighting
 from simulation import Simulation
 from PIL import Image, ImageTk
 
@@ -54,15 +56,18 @@ class Tooltip:
             self.tipwindow.withdraw()
             
 # Initialize the main window
-root = tk.Tk()
-root.title("Energy Orchestration Simulation")
-
+root0 = tk.Tk()
+root0.title("Energy Orchestration Simulation")
+root0.geometry("1260x860")
 # Tkinter variables for HVAC
 hvac_var = tk.BooleanVar()
 outside_temp_var = tk.DoubleVar()
 desired_temp_var = tk.DoubleVar()
 priority_hvac_var = tk.IntVar()
-
+# Tkinter variables for lighting
+lighting_var = tk.BooleanVar()
+bulb_count_var = tk.IntVar()
+lighting_priority_var = tk.IntVar()
 # Tkinter variables for EV Station
 ev_station_active_var = tk.BooleanVar()
 spots_level1_var = tk.IntVar()
@@ -73,7 +78,12 @@ spots_level3_var = tk.IntVar()
 priority_level3_var = tk.IntVar()
 
 # Tkinter variables for Orchestrator
+use_none_var = tk.BooleanVar(value=False)
 use_mpc_var = tk.BooleanVar(value=False)  
+use_ampc_var = tk.BooleanVar(value=False)  
+use_pso_var = tk.BooleanVar(value=False) 
+use_fl_var = tk.BooleanVar(value=False)
+
 selection_made_var = tk.BooleanVar(value=False)
 
 # Initialize Tkinter variable for simulation duration
@@ -89,7 +99,7 @@ def add_car_section():
     car_frame.pack(fill='x', expand=True, padx=5, pady=5)
     
     original_icon = Image.open("trash.png")
-    resized_icon = original_icon.resize((32, 32), Image.ANTIALIAS)  # Resize icon to 16x16 pixels
+    resized_icon = original_icon.resize((32, 32), Image.Resampling.LANCZOS)  # Resize icon to 16x16 pixels
     trash_icon = ImageTk.PhotoImage(resized_icon)
     delete_button = ttk.Button(car_frame, image=trash_icon, command=lambda frame=car_frame: delete_car(frame))
     delete_button.image = trash_icon  
@@ -175,7 +185,20 @@ def run_simulation():
     peak_power=int(peak_power_var.get()) 
     off_peak_power=int(off_peak_power_var.get())
     tolerance= int(tolerance_var.get())
-    # Check if the HVAC system should be included
+    # Check if the Lighting system should be included
+    if lighting_var.get() == 1:
+        bulb_count = bulb_count_var.get()
+        lighting_priority = lighting_priority_var.get()
+        lighting_model = Lighting(duration_hours, bulb_count, lighting_priority)
+    else:
+        lighting_model = None
+   
+    use_mpc=use_mpc_var.get()
+    use_ampc=use_ampc_var.get()
+    use_pso=use_pso_var.get()
+    use_fl=use_fl_var.get()
+   
+   # Check if the HVAC system should be included
     if hvac_var.get() == 1:
         outside_temperature = outside_temp_var.get()
         desired_temperature = desired_temp_var.get()
@@ -183,15 +206,15 @@ def run_simulation():
         hvac_model = Model(duration_hours, outside_temperature, desired_temperature, energy_min=1, energy_max=4, priority=hvac_priority)
     else:
         hvac_model = None
-    use_mpc=use_mpc_var.get()
+    # Check if the EVCS system should be included
     if ev_station_active_var.get() == 1:
         charging_levels_config = [
             {'level': 'Level1', 'rate': 2, 'min_energy': 1.2, 'max_energy': 2, 'priority': priority_level1_var.get(), 'spots': spots_level1_var.get()},
             {'level': 'Level2', 'rate': 7.6, 'min_energy': 7.6, 'max_energy': 19.2, 'priority': priority_level2_var.get(), 'spots': spots_level2_var.get()},
             {'level': 'Level3', 'rate': 50, 'min_energy': 30, 'max_energy': 50, 'priority': priority_level3_var.get(), 'spots': spots_level3_var.get()}
         ]
-        ev_station = ChargingStation(duration_hours, charging_levels_config)
 
+        ev_station = ChargingStation(duration_hours, charging_levels_config)
         cars = []
         for entry in car_entries:
             car_info = {
@@ -204,11 +227,11 @@ def run_simulation():
                 'max_rate': float(entry['max (kW)_rate'].get()),
             }
             cars.append(EV(**car_info))
-        simulation = Simulation(duration_hours, peak_power, off_peak_power, peak_hours, tolerance, use_mpc, cars, hvac_model, ev_station, ev_station.spots)
+        simulation = Simulation(duration_hours, peak_power, off_peak_power, peak_hours, tolerance, use_mpc,use_ampc,use_pso,use_fl, cars, lighting_model, hvac_model, ev_station, ev_station.spots)
     else:
         cars = []
         ev_station = None
-        simulation = Simulation(duration_hours, peak_power, off_peak_power, peak_hours, tolerance, use_mpc, cars, hvac_model,ev_station)
+        simulation = Simulation(duration_hours, peak_power, off_peak_power, peak_hours, tolerance, use_mpc,use_ampc,use_pso, use_fl,  cars, lighting_model, hvac_model, ev_station)
 
     simulation.run()
 
@@ -232,6 +255,12 @@ def validate_inputs():
         return False
     if hvac_var.get() == 1 and priority_hvac_var.get() <= 0:
         messagebox.showerror("Error", "HVAC priority must be greater than zero")
+        return False
+    if lighting_var.get() == 1 and lighting_priority_var.get() <= 0:
+        messagebox.showerror("Error", "Lighting priority must be greater than zero")
+        return False
+    if lighting_var.get() == 1 and bulb_count_var.get() <= 0:
+        messagebox.showerror("Error", "Number of bulbs must be greater than zero else turn off lighting device")
         return False
     if ev_station_active_var.get() == 1:
         if not car_entries:
@@ -265,6 +294,10 @@ def toggle_hvac_controls():
     hvac_temp_entry.configure(state=state)
     hvac_desired_temp_entry.configure(state=state)
     hvac_priority_entry.configure(state=state)
+def toggle_lighting_controls():
+    state = 'normal' if lighting_var.get() == 1 else 'disabled'
+    bulb_count_entry.configure(state=state)
+    lighting_priority_entry.configure(state=state)
 
 def toggle_ev_station_controls():
     state = 'normal' if ev_station_active_var.get() else 'disabled'
@@ -338,26 +371,37 @@ def parse_peak_hours(peak_hours_str):
         messagebox.showerror("Error", f"Invalid format for peak hours: {e}")
         return None
 
-def select_none():
-    none_button.config(bg='lightblue', fg='white')  # Color for selected button
-    mpc_button.config(bg='SystemButtonFace', fg='black')  # Default system color
+
+
+
+def select_option(button, use_var):
+    # Reset all buttons to default colors
+    none_button.config(bg='light gray', fg='black')
+    mpc_button.config(bg='light gray', fg='black')
+    ampc_button.config(bg='light gray', fg='black')
+    pso_button.config(bg='light gray', fg='black')
+    
+    fl_button.config(bg='light gray', fg='black')
+
+    # Set the selected button's colors
+    button.config(bg='lightblue', fg='white')
+
+    # Reset all variables to False
     use_mpc_var.set(False)
+    use_ampc_var.set(False)
+    use_pso_var.set(False)
+    use_fl_var.set(False)
+
+    # Set the corresponding variable to True
+    use_var.set(True)
+
+    # Indicate a selection has been made
     selection_made_var.set(True)
-
-def select_mpc():
-    mpc_button.config(bg='lightblue', fg='white')  # Color for selected button
-    none_button.config(bg='SystemButtonFace', fg='black')  # Default system color
-    use_mpc_var.set(True)
-    selection_made_var.set(True)
-power_frame = ttk.LabelFrame(root, text="Available Power Settings", padding=(10, 5))
-power_frame.pack(fill='x', padx=10, pady=5)
-
-
-
+      
 def populate_default_values():
     # Setting default power settings
-    peak_power_var.set(80) 
-    off_peak_power_var.set(100) 
+    peak_power_var.set(100) 
+    off_peak_power_var.set(80) 
     peak_hours_var.set("6-10") 
     tolerance_var.set(80)  
     """
@@ -397,6 +441,101 @@ def populate_default_values():
         car_entries[car_index]['max (kW)_rate'].insert(0, str(ev["max_rate"]))
         car_entries[car_index]['desired_level'].set(ev["level"])
 
+
+def load_settings_from_file():
+    filepath = filedialog.askopenfilename(filetypes=[("JSON files", "*.json")])  # Prompt user to select a JSON file
+    if not filepath:
+        return  # Exit if no file is selected
+
+    with open(filepath, 'r') as file:
+        data = json.load(file)
+
+    # Example of how to populate GUI components from file data
+    peak_power_var.set(data['peak_power'])
+    off_peak_power_var.set(data['off_peak_power'])
+    peak_hours_var.set(data['peak_hours'])
+    tolerance_var.set(data['tolerance'])
+
+    hvac_var.set(data['hvac']['active'])
+    outside_temp_var.set(data['hvac']['outside_temperature'])
+    desired_temp_var.set(data['hvac']['desired_temperature'])
+    priority_hvac_var.set(data['hvac']['priority'])
+
+    lighting_var.set(data['lighting']['active'])
+    bulb_count_var.set(data['lighting']['bulb_count'])
+    lighting_priority_var.set(data['lighting']['priority'])
+
+    ev_station_active_var.set(data['ev_station']['active'])
+    spots_level1_var.set(data['ev_station']['level1']['spots'])
+    priority_level1_var.set(data['ev_station']['level1']['priority'])
+    spots_level2_var.set(data['ev_station']['level2']['spots'])
+    priority_level2_var.set(data['ev_station']['level2']['priority'])
+    spots_level3_var.set(data['ev_station']['level3']['spots'])
+    priority_level3_var.set(data['ev_station']['level3']['priority'])
+
+    simulation_duration_var.set(data['simulation_duration'])
+
+    # Remove existing cars and re-add from file
+    for entry in car_entries[:]:
+        delete_car(entry['frame'])
+
+    for car in data['cars']:
+        add_car_section()
+        car_index = len(car_entries) - 1
+        car_entries[car_index]['arrival (each 15min)'].insert(0, str(car["arrival"]))
+        car_entries[car_index]['battery (%)_state'].insert(0, str(car["battery_state"]))
+        car_entries[car_index]['capacity (kW)_entry'].insert(0, str(car["capacity"]))
+        car_entries[car_index]['min (kW)_rate'].insert(0, str(car["min_rate"]))
+        car_entries[car_index]['max (kW)_rate'].insert(0, str(car["max_rate"]))
+        car_entries[car_index]['desired_level'].set(car["level"])
+
+    toggle_hvac_controls()
+    toggle_ev_station_controls()
+
+
+# Create a main frame
+main_frame = ttk.Frame(root0)
+main_frame.pack(fill=tk.BOTH, expand=1)
+
+# Create a Canvas
+canvas = tk.Canvas(main_frame)
+canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
+
+# Add a scrollbar to the Canvas
+scrollbar = ttk.Scrollbar(main_frame, orient=tk.VERTICAL, command=canvas.yview)
+scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+# Configure the canvas
+canvas.configure(yscrollcommand=scrollbar.set)
+#canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+
+# Create another frame inside the Canvas
+root = ttk.Frame(canvas)
+root.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+
+# Add that new frame to a window in the canvas
+canvas.create_window((0, 0), window=root, anchor="nw")
+
+
+
+
+toolbar_frame = ttk.Frame(root)
+toolbar_frame.pack(side='top', fill='x', padx=10, pady=5)
+right_frame = ttk.Frame(toolbar_frame)
+right_frame.pack(side='right', padx=10, pady=5)  # This frame aligns to the right
+
+# Load an icon for the button
+icon_path = 'upload.png'  # Update this path to where your actual icon file is stored
+icon_image = Image.open(icon_path)
+icon_photo = ImageTk.PhotoImage(icon_image.resize((32, 32), Image.Resampling.LANCZOS))  # Resize the icon as needed
+
+# Create the button and add it to the right-aligned frame
+input_file_button = ttk.Button(right_frame, image=icon_photo, command=load_settings_from_file)
+input_file_button.image = icon_photo  # keep a reference to the image to avoid garbage collection
+input_file_button.pack()
+
+power_frame = ttk.LabelFrame(root, text="Available Power Settings", padding=(10, 5))
+power_frame.pack(fill='x', padx=10, pady=5)
 
 
 # Peak Power Entry
@@ -465,7 +604,36 @@ Tooltip(hvac_priority_label, "Priority level of the HVAC system, influencing its
 hvac_priority_entry = ttk.Entry(hvac_frame, textvariable=priority_hvac_var, width=5)
 hvac_priority_entry.pack(side='left', padx=2)
 hvac_var.trace_add('write', lambda *args: toggle_hvac_controls())
+############################
+lighting_frame = ttk.Frame(device_frame)
+lighting_frame.pack(fill='x', pady=5)
 
+lighting_label = ttk.Label(lighting_frame, text="Lighting:")
+lighting_label.pack(side='left', padx=2)
+Tooltip(lighting_label, "Control the lighting system, including the number of bulbs.")
+
+ttk.Radiobutton(lighting_frame, text="Yes", variable=lighting_var, value=1).pack(side='left', padx=2)
+ttk.Radiobutton(lighting_frame, text="No", variable=lighting_var, value=0).pack(side='left', padx=2)
+
+bulb_count_label = ttk.Label(lighting_frame, text="Number of Bulbs:")
+bulb_count_label.pack(side='left', padx=2)
+Tooltip(bulb_count_label, "Enter the total number of light bulbs managed by the system.")
+
+bulb_count_entry = ttk.Entry(lighting_frame, textvariable=bulb_count_var, width=5)
+bulb_count_entry.pack(side='left', padx=2)
+
+
+
+lighting_priority_label = ttk.Label(lighting_frame, text="Priority:")
+lighting_priority_label.pack(side='left', padx=2)
+Tooltip(lighting_priority_label, "Set the priority of lighting compared to other devices.")
+
+lighting_priority_entry = ttk.Entry(lighting_frame, textvariable=lighting_priority_var, width=5)
+lighting_priority_entry.pack(side='left', padx=2)
+
+lighting_var.trace_add('write', lambda *args: toggle_lighting_controls())
+
+#############################
 ev_station_frame = ttk.Frame(device_frame)
 ev_station_frame.pack(fill='x', pady=5)
 ev_station_label = ttk.Label(ev_station_frame, text="EV Station:")
@@ -500,14 +668,29 @@ orchestrator_frame = ttk.LabelFrame(root, text="Choose Orchestrator", padding=(1
 orchestrator_frame.pack(fill='x', padx=10, pady=5)
 
 
-none_button = tk.Button(orchestrator_frame, text="None", command=select_none)
+none_button = tk.Button(orchestrator_frame, text="None", command=lambda:select_option(none_button, use_none_var))
 none_button.pack(side='left', padx=5)
 
-mpc_button = tk.Button(orchestrator_frame, text="Model Predictive Control", command=select_mpc)
+mpc_button = tk.Button(orchestrator_frame, text="Model Predictive Control", command=lambda:select_option(mpc_button, use_mpc_var))
 mpc_button.pack(side='left', pady=5)
+
+ampc_button = tk.Button(orchestrator_frame, text="Adaptive MPC", command=lambda:select_option(ampc_button, use_ampc_var))
+ampc_button.pack(side='left', pady=5)
+
+pso_button = tk.Button(orchestrator_frame, text="Particle Swarm Optimization", command=lambda:select_option(pso_button, use_pso_var))
+pso_button.pack(side='left', pady=5)
+
+fl_button = tk.Button(orchestrator_frame, text="Fuzzy Logic", command=lambda:select_option(fl_button, use_fl_var))
+fl_button.pack(side='left', pady=5)
+
+
+
+
 
 submit_button = ttk.Button(root, text="Start Simulation", command=run_simulation)
 submit_button.pack(side='bottom', pady=10)
+
+
 
 # return when we remove populate_default_values()
 #add_car_section() 

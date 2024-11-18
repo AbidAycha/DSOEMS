@@ -1,0 +1,227 @@
+{
+  "peak_power": 85,
+  "off_peak_power": 100,
+  "peak_hours": "6-10,17-21",
+  "tolerance": 75,
+  "hvac": {
+    "active": 0,
+    "outside_temperature": 0,
+    "desired_temperature": 0,
+    "priority": 0
+  },
+  "lighting": {
+    "active": 0,
+    "bulb_count": 0,
+    "priority": 0
+  },
+  "ev_station": {
+    "active": 1,
+    "level1": {
+      "spots": 3,
+      "priority": 3
+    },
+    "level2": {
+      "spots": 2,
+      "priority": 2
+    },
+    "level3": {
+      "spots": 2,
+      "priority": 1
+    }
+  },
+  "simulation_duration": 48,
+  "cars": [
+    {
+      "arrival": 134,
+      "battery_state": 47,
+      "capacity": 109,
+      "min_rate": 16,
+      "max_rate": 17,
+      "level": "Level2"
+    },
+    {
+      "arrival": 133,
+      "battery_state": 81,
+      "capacity": 55,
+      "min_rate": 16,
+      "max_rate": 17,
+      "level": "Level2"
+    },
+    {
+      "arrival": 125,
+      "battery_state": 39,
+      "capacity": 91,
+      "min_rate": 38,
+      "max_rate": 44,
+      "level": "Level3"
+    },
+    {
+      "arrival": 114,
+      "battery_state": 97,
+      "capacity": 77,
+      "min_rate": 39,
+      "max_rate": 47,
+      "level": "Level3"
+    },
+    {
+      "arrival": 44,
+      "battery_state": 56,
+      "capacity": 29,
+      "min_rate": 1,
+      "max_rate": 2,
+      "level": "Level1"
+    },
+    {
+      "arrival": 21,
+      "battery_state": 48,
+      "capacity": 184,
+      "min_rate": 49,
+      "max_rate": 50,
+      "level": "Level3"
+    },
+    {
+      "arrival": 181,
+      "battery_state": 32,
+      "capacity": 23,
+      "min_rate": 1,
+      "max_rate": 2,
+      "level": "Level1"
+    },
+    {
+      "arrival": 40,
+      "battery_state": 73,
+      "capacity": 38,
+      "min_rate": 1,
+      "max_rate": 2,
+      "level": "Level1"
+    },
+    {
+      "arrival": 32,
+      "battery_state": 56,
+      "capacity": 110,
+      "min_rate": 9,
+      "max_rate": 10,
+      "level": "Level2"
+    },
+    {
+      "arrival": 79,
+      "battery_state": 75,
+      "capacity": 25,
+      "min_rate": 1,
+      "max_rate": 2,
+      "level": "Level1"
+    },
+    {
+      "arrival": 5,
+      "battery_state": 74,
+      "capacity": 123,
+      "min_rate": 34,
+      "max_rate": 41,
+      "level": "Level3"
+    },
+    {
+      "arrival": 147,
+      "battery_state": 54,
+      "capacity": 104,
+      "min_rate": 36,
+      "max_rate": 39,
+      "level": "Level3"
+    },
+    {
+      "arrival": 177,
+      "battery_state": 84,
+      "capacity": 28,
+      "min_rate": 1,
+      "max_rate": 2,
+      "level": "Level1"
+    },
+    {
+      "arrival": 10,
+      "battery_state": 37,
+      "capacity": 40,
+      "min_rate": 18,
+      "max_rate": 19,
+      "level": "Level2"
+    },
+    {
+      "arrival": 74,
+      "battery_state": 89,
+      "capacity": 116,
+      "min_rate": 11,
+      "max_rate": 15,
+      "level": "Level2"
+    },
+    {
+      "arrival": 117,
+      "battery_state": 85,
+      "capacity": 35,
+      "min_rate": 1,
+      "max_rate": 2,
+      "level": "Level1"
+    },
+    {
+      "arrival": 14,
+      "battery_state": 97,
+      "capacity": 130,
+      "min_rate": 40,
+      "max_rate": 44,
+      "level": "Level3"
+    },
+    {
+      "arrival": 97,
+      "battery_state": 30,
+      "capacity": 25,
+      "min_rate": 1,
+      "max_rate": 2,
+      "level": "Level1"
+    },
+    {
+      "arrival": 79,
+      "battery_state": 96,
+      "capacity": 168,
+      "min_rate": 40,
+      "max_rate": 47,
+      "level": "Level3"
+    },
+    {
+      "arrival": 134,
+      "battery_state": 65,
+      "capacity": 37,
+      "min_rate": 1,
+      "max_rate": 2,
+      "level": "Level1"
+    },
+    {
+      "arrival": 176,
+      "battery_state": 49,
+      "capacity": 108,
+      "min_rate": 43,
+      "max_rate": 50,
+      "level": "Level3"
+    },
+    {
+      "arrival": 45,
+      "battery_state": 93,
+      "capacity": 84,
+      "min_rate": 49,
+      "max_rate": 50,
+      "level": "Level3"
+    },
+    {
+      "arrival": 148,
+      "battery_state": 20,
+      "capacity": 103,
+      "min_rate": 10,
+      "max_rate": 11,
+      "level": "Level2"
+    },
+    {
+      "arrival": 18,
+      "battery_state": 12,
+      "capacity": 23,
+      "min_rate": 1,
+      "max_rate": 2,
+      "level": "Level1"
+    }
+  ]
+}
